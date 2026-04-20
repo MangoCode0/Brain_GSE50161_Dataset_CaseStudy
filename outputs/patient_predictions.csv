@@ -1,0 +1,2 @@
+sample_number,predicted_type,confidence_pct,true_label,correct,prob_ependymoma,prob_glioblastoma,prob_medulloblastoma,prob_normal,prob_pilocytic_astrocytoma
+1,medulloblastoma,87.0,medulloblastoma,True,0.055,0.035,0.87,0.025,0.015

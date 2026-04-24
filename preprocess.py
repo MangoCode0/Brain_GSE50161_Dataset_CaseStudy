@@ -1,7 +1,5 @@
-# ============================================================
-# STAGE 3: Preprocessing
+# Preprocessing
 # Goal: Prepare the raw data so our ML model can learn from it
-#
 # Steps we do here:
 #   1. Load data
 #   2. Separate features (X) and target label (y)
@@ -10,68 +8,45 @@
 #   5. Scale gene expression values
 #   6. Split into train and test sets
 #   7. Save everything for next stage
-# ============================================================
 
 import pandas as pd
 import numpy as np
 import pickle
 import os
 
-# LabelEncoder  → converts text class names to numbers
-# StandardScaler → scales all gene values to same range
-# train_test_split → splits data into train and test
+# LabelEncoder- converts text class names to numbers
+# StandardScaler- scales all gene values to same range
+# train_test_split- splits data into train and test
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
-# ---------------------------------------------------------------
-# STEP 1: Load the dataset
+#Load the dataset
 # Same as before — load CSV into a DataFrame
-# ---------------------------------------------------------------
-print("=" * 55)
-print("STEP 1: Loading Data")
-print("=" * 55)
 
 df = pd.read_csv("data/Brain_GSE50161.csv")
 print(f"Dataset loaded: {df.shape[0]} samples, {df.shape[1]} columns")
 
 
-# ---------------------------------------------------------------
-# STEP 2: Separate features (X) and target (y)
-#
-# X = the input to the model = all gene expression values
-# y = what we want to predict = tumor type
-#
-# We also drop the 'samples' column because it's just an ID number
-# — it has no biological meaning for prediction
-# ---------------------------------------------------------------
-print("\n" + "=" * 55)
-print("STEP 2: Separating Features (X) and Target (y)")
-print("=" * 55)
+# Separate features (X) and target (y)
+print("Separating Features (X) and Target (y)")
 
-# y = target column (what we predict)
+# y = target column
 # We extract it BEFORE modifying df
 y_raw = df['type']   # still text labels like "ependymoma"
 
 # X = everything except 'samples' (ID) and 'type' (label)
-X = df.drop(columns=['samples', 'type'])
+X = df.drop(columns=['samples', 'type']) #drop the 'samples' column because it's just an ID number
 
 print(f"X shape (features): {X.shape}")
 print(f"y shape (labels)  : {y_raw.shape}")
 print(f"Unique classes    : {y_raw.unique()}")
 
-
-# ---------------------------------------------------------------
-# STEP 3: Remove AFFX control probes
-#
+# Remove AFFX control probes
 # Columns starting with "AFFX-" are technical control probes
 # used by the Affymetrix chip for quality checking.
 # They are NOT real genes — including them adds noise.
-#
 # We filter them out by keeping only columns that do NOT start with AFFX
-# ---------------------------------------------------------------
-print("\n" + "=" * 55)
-print("STEP 3: Removing AFFX Control Probes")
-print("=" * 55)
+print("Removing AFFX Control Probes")
 
 before = X.shape[1]
 
@@ -86,26 +61,13 @@ print(f"AFFX probes removed    : {before - after}")
 print(f"Columns after removal  : {after}")
 print("These were quality control probes, not real genes")
 
-
-# ---------------------------------------------------------------
-# STEP 4: Encode text labels into numbers
-#
+#Encode text labels into numbers
 # ML models only work with numbers, not text.
-# LabelEncoder assigns a number to each unique class alphabetically:
-#
-#   ependymoma            → 0
-#   glioblastoma          → 1
-#   medulloblastoma       → 2
-#   normal                → 3
-#   pilocytic_astrocytoma → 4
-#
+# LabelEncoder assigns a number to each unique class alphabetically
+
 # fit_transform() = learn the mapping AND apply it in one step
 # We also SAVE the encoder so later we can reverse:
-#   0 → "ependymoma" (for showing predictions in the app)
-# ---------------------------------------------------------------
-print("\n" + "=" * 55)
-print("STEP 4: Encoding Labels (Text → Numbers)")
-print("=" * 55)
+print("Encoding Labels :")
 
 encoder = LabelEncoder()
 y = encoder.fit_transform(y_raw)   # y is now an array of numbers
@@ -118,8 +80,7 @@ print(f"\ny (before): {y_raw.values[:5]}")
 print(f"y (after) : {y[:5]}")
 
 
-# ---------------------------------------------------------------
-# STEP 5: Train/Test Split
+# Train/Test Split
 #
 # We split BEFORE scaling. Why?
 # Because the scaler must learn (fit) only from training data.
@@ -130,10 +91,7 @@ print(f"y (after) : {y[:5]}")
 # stratify=y ensures each tumor type is proportionally represented
 # in both train and test sets.
 # random_state=42 makes the split reproducible (same result every run)
-# ---------------------------------------------------------------
-print("\n" + "=" * 55)
 print("STEP 5: Train/Test Split (80% train, 20% test)")
-print("=" * 55)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,              # features
@@ -156,9 +114,8 @@ for i, name in enumerate(encoder.classes_):
     print(f"  {name:25s} → train: {train_dist.get(i,0):3d} | test: {test_dist.get(i,0):3d}")
 
 
-# ---------------------------------------------------------------
-# STEP 6: Feature Scaling (StandardScaler)
-#
+#Feature Scaling
+
 # StandardScaler transforms each gene column so that:
 #   mean = 0
 #   standard deviation = 1
@@ -170,7 +127,7 @@ for i, name in enumerate(encoder.classes_):
 #   scaler.transform(X_test)      → applies SAME mean/std to test (no learning)
 #
 # We never fit on test data — that would be cheating.
-# ---------------------------------------------------------------
+
 print("\n" + "=" * 55)
 print("STEP 6: Scaling Gene Expression Values")
 print("=" * 55)
@@ -188,8 +145,7 @@ print(f"After  scaling — Train mean: {X_train_scaled.mean():.4f}, std: {X_trai
 print("After scaling: mean≈0, std≈1 for all genes — fair comparison")
 
 
-# ---------------------------------------------------------------
-# STEP 7: Save everything
+#  Save everything
 #
 # We save:
 #   X_train_scaled, X_test_scaled  → preprocessed feature matrices
@@ -200,10 +156,7 @@ print("After scaling: mean≈0, std≈1 for all genes — fair comparison")
 #
 # pickle.dump() serializes Python objects to binary files
 # This lets us load them in the next scripts without reprocessing
-# ---------------------------------------------------------------
-print("\n" + "=" * 55)
-print("STEP 7: Saving Preprocessed Data")
-print("=" * 55)
+print(" Saving Preprocessed Data:")
 
 os.makedirs("model", exist_ok=True)
 os.makedirs("data/processed", exist_ok=True)
@@ -230,8 +183,7 @@ print("Saved: model/encoder.pkl")
 print("Saved: model/scaler.pkl")
 print("Saved: model/feature_names.pkl")
 
-print("\n✅ Preprocessing complete!")
+print("\nPreprocessing complete")
 print(f"   {X_train_scaled.shape[0]} training samples ready")
 print(f"   {X_test_scaled.shape[0]}  testing samples ready")
 print(f"   {X_train_scaled.shape[1]} gene features")
-print("\n👉 Next: Run 3_train_model.py")

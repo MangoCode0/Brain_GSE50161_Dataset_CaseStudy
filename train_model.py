@@ -1,4 +1,3 @@
-# ============================================================
 # STAGE 4: PCA + Model Training + Evaluation
 #
 # Goal: Reduce 54,613 gene features → 50 components using PCA,
@@ -14,7 +13,6 @@
 #   → Evaluate on test set
 #   → Plot confusion matrix
 #   → Save model + PCA
-# ============================================================
 import matplotlib
 matplotlib.use('Agg') 
 import numpy as np
@@ -38,12 +36,10 @@ os.makedirs("outputs", exist_ok=True)
 os.makedirs("model",   exist_ok=True)
 
 
-# ---------------------------------------------------------------
 # STEP 1: Load preprocessed data
 #
 # np.load() loads the .npy files we saved in preprocess stage
 # allow_pickle=False is safe default for plain arrays
-# ---------------------------------------------------------------
 print("=" * 55)
 print("STEP 1: Loading Preprocessed Data")
 print("=" * 55)
@@ -59,7 +55,6 @@ print(f"X_test  shape : {X_test.shape}")   # (26,  54613)
 print(f"Classes       : {list(encoder.classes_)}")
 
 
-# ---------------------------------------------------------------
 # STEP 2: Find the right number of PCA components
 #
 # We don't just guess 20 or 50 — we check how much variance
@@ -76,7 +71,6 @@ print(f"Classes       : {list(encoder.classes_)}")
 # diminishing returns.
 #
 # We fit PCA on train data only (never touch test data here)
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 2: Finding Optimal PCA Components")
 print("=" * 55)
@@ -127,7 +121,6 @@ plt.show()
 print("Chart saved: outputs/pca_variance_curve.png")
 
 
-# ---------------------------------------------------------------
 # STEP 3: Apply PCA
 #
 # Now we actually reduce dimensions:
@@ -137,7 +130,6 @@ print("Chart saved: outputs/pca_variance_curve.png")
 # IMPORTANT:
 #   fit_transform on train → PCA learns the components from train data
 #   transform on test      → applies same transformation (no new learning)
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 3: Applying PCA")
 print("=" * 55)
@@ -181,7 +173,6 @@ plt.show()
 print("Chart saved: outputs/pca_2d_scatter.png")
 
 
-# ---------------------------------------------------------------
 # STEP 4: Train the Random Forest
 #
 # Parameters explained:
@@ -211,7 +202,6 @@ model.fit(X_train_pca, y_train)
 print("Training complete!")
 
 
-# ---------------------------------------------------------------
 # STEP 5: Cross Validation
 #
 # Instead of trusting ONE train/test split, we test the model
@@ -222,7 +212,6 @@ print("Training complete!")
 # scoring='f1_macro' = macro F1 (treats all classes equally)
 #
 # This gives a much more honest picture of model performance
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 5: Stratified 5-Fold Cross Validation")
 print("=" * 55)
@@ -246,7 +235,6 @@ print(f"Std Deviation     : {cv_scores.std():.4f}")
 print("(Low std = model is consistent across different data splits)")
 
 
-# ---------------------------------------------------------------
 # STEP 6: Final Evaluation on Test Set
 #
 # Now we use the model on X_test_pca — data it has NEVER seen.
@@ -254,7 +242,6 @@ print("(Low std = model is consistent across different data splits)")
 #
 # classification_report gives precision, recall, F1 per class
 # confusion_matrix shows which classes were confused with which
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 6: Final Evaluation on Test Set")
 print("=" * 55)
@@ -282,7 +269,6 @@ print("  f1-score  : harmonic mean of precision & recall (best single metric)")
 print("  support   : how many samples of this class in test set")
 
 
-# ---------------------------------------------------------------
 # STEP 7: Confusion Matrix
 #
 # A confusion matrix shows:
@@ -294,7 +280,6 @@ print("  support   : how many samples of this class in test set")
 # Example reading:
 #   Row "glioblastoma", Col "ependymoma" = 2
 #   means: 2 glioblastoma samples were wrongly predicted as ependymoma
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 7: Confusion Matrix")
 print("=" * 55)
@@ -321,7 +306,6 @@ plt.show()
 print("Chart saved: outputs/confusion_matrix.png")
 
 
-# ---------------------------------------------------------------
 # STEP 8: Save the trained model and PCA
 #
 # We save:
@@ -331,7 +315,6 @@ print("Chart saved: outputs/confusion_matrix.png")
 # These are needed in:
 #   - app.py for predictions on new data
 #   - biomarker script for feature importance analysis
-# ---------------------------------------------------------------
 print("\n" + "=" * 55)
 print("STEP 8: Saving Model and PCA")
 print("=" * 55)

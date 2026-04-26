@@ -16,6 +16,7 @@ import numpy as np
 import pickle
 import os
 import sys
+import random
 
 
 # ---------------------------------------------------------------
@@ -121,17 +122,60 @@ def load_patient_data(feature_names):
 
         # Ask how many demo samples
         print()
-        n = input("How many demo samples to predict? (1-10, default 3): ").strip()
-        n = int(n) if n.isdigit() and 1 <= int(n) <= 10 else 3
+        n = input("How many demo samples to predict? (1-10, default 5): ").strip()
+        n = int(n) if n.isdigit() and 1 <= int(n) <= 10 else 5
 
-        # Save true labels for comparison (we know these for demo data)
-        true_labels = list(df_full['type'].values[:n])
+        # -------------------------------------------------------
+        # FIXED: Use STRATIFIED random sampling
+        # Old code used df.iloc[:n] which always picked the first
+        # n rows — all ependymoma since dataset is sorted by class.
+        #
+        # New approach: pick at least 1 sample from EACH class,
+        # then fill remaining slots randomly from the whole dataset.
+        #
+        # This guarantees you see different tumor types every time.
+        # -------------------------------------------------------
+        all_classes = df_full['type'].unique()
+        n_classes   = len(all_classes)
 
-        # Remove metadata columns
-        df = df_full.drop(columns=['samples', 'type'], errors='ignore')
-        df = df.iloc[:n]
+        if n >= n_classes:
+            # Pick 1 from each class first (guaranteed variety)
+            one_per_class = (
+                df_full.groupby('type')
+                .apply(lambda x: x.sample(1, random_state=np.random.randint(0, 9999)))
+                .reset_index(drop=True)
+            )
+            # How many more do we need after one-per-class?
+            remaining = n - n_classes
+            if remaining > 0:
+                # Sample remaining randomly from full dataset
+                # exclude rows already picked
+                already_picked = one_per_class.index
+                rest = df_full.drop(index=already_picked, errors='ignore')
+                extra = rest.sample(min(remaining, len(rest)),
+                                    random_state=np.random.randint(0, 9999))
+                sampled_df = pd.concat([one_per_class, extra]).reset_index(drop=True)
+            else:
+                # n < n_classes: just pick n random rows from one_per_class
+                sampled_df = one_per_class.sample(n).reset_index(drop=True)
+        else:
+            # n is less than number of classes — just pick n random rows
+            sampled_df = df_full.sample(n, random_state=np.random.randint(0, 9999)).reset_index(drop=True)
 
-        print(Color.GREEN + f"✅ Demo data loaded: {n} samples" + Color.RESET)
+        # Save true labels BEFORE dropping the type column
+        true_labels = list(sampled_df['type'].values)
+
+        # Show which classes were selected
+        print()
+        print("  Randomly selected samples:")
+        for i, label in enumerate(true_labels):
+            print(f"    Sample {i+1} → true class: {Color.YELLOW}{label}{Color.RESET}")
+
+        # Remove metadata columns for prediction
+        df = sampled_df.drop(columns=['samples', 'type'], errors='ignore')
+
+        print()
+        print(Color.GREEN + f"✅ Demo data loaded: {n} samples (stratified random)" + Color.RESET)
         return df, true_labels
 
     else:

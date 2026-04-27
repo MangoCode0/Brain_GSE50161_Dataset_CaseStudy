@@ -1,4 +1,3 @@
-# ============================================================
 # predict_patient.py
 #
 # Use this script to predict brain tumor type for REAL patient data
@@ -9,7 +8,6 @@
 #
 # The script will ask you for the path to your patient CSV file
 # and print the prediction results directly in the terminal.
-# ============================================================
 
 import pandas as pd
 import numpy as np
@@ -19,11 +17,9 @@ import sys
 import random
 
 
-# ---------------------------------------------------------------
 # COLORS FOR TERMINAL OUTPUT
 # These are ANSI escape codes that color terminal text
 # Makes output easier to read
-# ---------------------------------------------------------------
 class Color:
     GREEN  = '\033[92m'
     RED    = '\033[91m'

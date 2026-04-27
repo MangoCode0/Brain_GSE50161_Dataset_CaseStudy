@@ -1,4 +1,4 @@
-# STAGE 4: PCA + Model Training + Evaluation
+# PCA ,ModelTraining,Evaluation
 #
 # Goal: Reduce 54,613 gene features → 50 components using PCA,
 #       train a Random Forest classifier, evaluate properly,
@@ -40,14 +40,14 @@ os.makedirs("model",   exist_ok=True)
 #
 # np.load() loads the .npy files we saved in preprocess stage
 # allow_pickle=False is safe default for plain arrays
-print("=" * 55)
-print("STEP 1: Loading Preprocessed Data")
-print("=" * 55)
+print("Loading Preprocessed Data")
 
 X_train = np.load("data/processed/X_train.npy")
 X_test  = np.load("data/processed/X_test.npy")
 y_train = np.load("data/processed/y_train.npy")
 y_test  = np.load("data/processed/y_test.npy")
+
+
 encoder = pickle.load(open("model/encoder.pkl", "rb"))
 
 print(f"X_train shape : {X_train.shape}")  # (104, 54613)
@@ -55,7 +55,7 @@ print(f"X_test  shape : {X_test.shape}")   # (26,  54613)
 print(f"Classes       : {list(encoder.classes_)}")
 
 
-# STEP 2: Find the right number of PCA components
+# Find the right number of PCA components
 #
 # We don't just guess 20 or 50 — we check how much variance
 # each component explains.
@@ -71,9 +71,7 @@ print(f"Classes       : {list(encoder.classes_)}")
 # diminishing returns.
 #
 # We fit PCA on train data only (never touch test data here)
-print("\n" + "=" * 55)
-print("STEP 2: Finding Optimal PCA Components")
-print("=" * 55)
+print("Finding Optimal PCA Components")
 
 # First fit PCA with all possible components to see variance curve
 pca_full = PCA(random_state=42)
@@ -121,8 +119,7 @@ plt.show()
 print("Chart saved: outputs/pca_variance_curve.png")
 
 
-# STEP 3: Apply PCA
-#
+#Apply PCA
 # Now we actually reduce dimensions:
 #   X_train: 104 samples × 54,613 genes → 104 samples × 50 components
 #   X_test :  26 samples × 54,613 genes →  26 samples × 50 components
@@ -130,9 +127,7 @@ print("Chart saved: outputs/pca_variance_curve.png")
 # IMPORTANT:
 #   fit_transform on train → PCA learns the components from train data
 #   transform on test      → applies same transformation (no new learning)
-print("\n" + "=" * 55)
-print("STEP 3: Applying PCA")
-print("=" * 55)
+print("\nApplying PCA")
 
 pca = PCA(n_components=N_COMPONENTS, random_state=42)
 
@@ -173,7 +168,7 @@ plt.show()
 print("Chart saved: outputs/pca_2d_scatter.png")
 
 
-# STEP 4: Train the Random Forest
+# Train the Random Forest
 #
 # Parameters explained:
 #   n_estimators=200  → 200 decision trees vote together
@@ -185,10 +180,7 @@ print("Chart saved: outputs/pca_2d_scatter.png")
 #   random_state=42   → reproducible results
 #   n_jobs=-1         → use all CPU cores for speed
 # ---------------------------------------------------------------
-print("\n" + "=" * 55)
-print("STEP 4: Training Random Forest")
-print("=" * 55)
-print("Training with 200 trees... (this may take 10-30 seconds)")
+print("Random forest Training with 200 trees")
 
 model = RandomForestClassifier(
     n_estimators=200,       # number of trees
@@ -202,7 +194,7 @@ model.fit(X_train_pca, y_train)
 print("Training complete!")
 
 
-# STEP 5: Cross Validation
+# Cross Validation
 #
 # Instead of trusting ONE train/test split, we test the model
 # 5 different ways and average the results.
@@ -212,10 +204,7 @@ print("Training complete!")
 # scoring='f1_macro' = macro F1 (treats all classes equally)
 #
 # This gives a much more honest picture of model performance
-print("\n" + "=" * 55)
-print("STEP 5: Stratified 5-Fold Cross Validation")
-print("=" * 55)
-print("Running 5 folds... (may take 30-60 seconds)")
+print("\nStratified 5-Fold Cross Validation")
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -232,19 +221,17 @@ cv_scores = cross_val_score(
 print(f"F1 Score per fold : {[round(s, 4) for s in cv_scores]}")
 print(f"Mean F1 Score     : {cv_scores.mean():.4f}")
 print(f"Std Deviation     : {cv_scores.std():.4f}")
-print("(Low std = model is consistent across different data splits)")
+print("Low std = model is consistent across different data splits")
 
 
-# STEP 6: Final Evaluation on Test Set
+#Final Evaluation on Test Set
 #
 # Now we use the model on X_test_pca — data it has NEVER seen.
 # This is the honest final score.
 #
 # classification_report gives precision, recall, F1 per class
 # confusion_matrix shows which classes were confused with which
-print("\n" + "=" * 55)
-print("STEP 6: Final Evaluation on Test Set")
-print("=" * 55)
+print("\nFinal Evaluation on Test Set")
 
 y_pred = model.predict(X_test_pca)
 
@@ -254,7 +241,6 @@ print(f"Test Accuracy: {acc*100:.2f}%")
 
 # Detailed per-class report
 print("\nDetailed Classification Report:")
-print("-" * 55)
 print(classification_report(
     y_test,
     y_pred,
@@ -262,15 +248,14 @@ print(classification_report(
 ))
 
 # Explanation of report columns:
-print("Column meanings:")
+print("\nColumn meanings:")
 print("  precision : when model predicts X, how often is it correct?")
 print("  recall    : of all actual X cases, how many did model find?")
-print("  f1-score  : harmonic mean of precision & recall (best single metric)")
+print("  f1-score  : harmonic mean of precision & recall")
 print("  support   : how many samples of this class in test set")
 
 
-# STEP 7: Confusion Matrix
-#
+# Confusion Matrix
 # A confusion matrix shows:
 #   Rows    = actual class
 #   Columns = predicted class
@@ -280,9 +265,7 @@ print("  support   : how many samples of this class in test set")
 # Example reading:
 #   Row "glioblastoma", Col "ependymoma" = 2
 #   means: 2 glioblastoma samples were wrongly predicted as ependymoma
-print("\n" + "=" * 55)
-print("STEP 7: Confusion Matrix")
-print("=" * 55)
+print("\nConfusion Matrix")
 
 cm = confusion_matrix(y_test, y_pred)
 
@@ -306,8 +289,7 @@ plt.show()
 print("Chart saved: outputs/confusion_matrix.png")
 
 
-# STEP 8: Save the trained model and PCA
-#
+#Save the trained model and PCA
 # We save:
 #   model.pkl → the trained Random Forest
 #   pca.pkl   → the fitted PCA transformer
@@ -315,9 +297,7 @@ print("Chart saved: outputs/confusion_matrix.png")
 # These are needed in:
 #   - app.py for predictions on new data
 #   - biomarker script for feature importance analysis
-print("\n" + "=" * 55)
-print("STEP 8: Saving Model and PCA")
-print("=" * 55)
+print("Saving Model and PCA")
 
 pickle.dump(model, open("model/model.pkl", "wb"))
 pickle.dump(pca,   open("model/pca.pkl",   "wb"))
@@ -325,12 +305,10 @@ pickle.dump(pca,   open("model/pca.pkl",   "wb"))
 print("Saved: model/model.pkl")
 print("Saved: model/pca.pkl")
 
-print("\n" + "=" * 55)
-print("✅ TRAINING COMPLETE — SUMMARY")
-print("=" * 55)
+print("\n")
+print("TRAINING COMPLETE ")
 print(f"  Features used       : {N_COMPONENTS} PCA components (from 54,613 genes)")
 print(f"  Training samples    : {X_train_pca.shape[0]}")
 print(f"  Test samples        : {X_test_pca.shape[0]}")
 print(f"  Cross-val F1 (mean) : {cv_scores.mean():.4f}")
 print(f"  Test Accuracy       : {acc*100:.2f}%")
-print("\n👉 Next: Run 4_biomarker_discovery.py")

@@ -3,7 +3,6 @@
 A machine learning project that predicts brain tumor type from gene expression microarray data.
 Built as Minor Project-I (BTCSE 601) at Jamia Hamdard, New Delhi.
 
----
 
 ## What This Project Does
 
@@ -16,7 +15,6 @@ The pipeline runs in four Python scripts in order:
 3. train_model.py — applies PCA, trains the model, and evaluates it
 4. predict_patient.py — takes a new patient CSV and predicts the tumor type
 
----
 
 ## Dataset
 
@@ -34,7 +32,6 @@ The data was measured using the Affymetrix HG-U133 Plus 2.0 microarray chip and 
 
 Dataset link: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50161
 
----
 
 ## Requirements
 
@@ -50,7 +47,6 @@ The requirements file contains:
     matplotlib
     seaborn
 
----
 
 ## How to Run
 
@@ -60,14 +56,13 @@ First place the dataset CSV file inside a folder called data:
 
 Then run the four scripts in order:
 
-    python 1_explore_data.py
-    python 2_preprocess.py
-    python 3_train_model.py
-    python 4_predict_patient.py
+    python explore_data.py
+    python preprocess.py
+    python train_model.py
+    python predict_patient.py
 
 Each script saves its output automatically. You do not need to pass any arguments.
 
----
 
 ## Script 1 — explore_data.py
 
@@ -99,7 +94,6 @@ Feature scaling: StandardScaler transforms each gene column so that across the t
 
 All processed arrays and Python objects are saved to files so the next scripts can load them directly without repeating any work.
 
----
 
 ## Script 3 — train_model.py
 
@@ -117,7 +111,6 @@ Final evaluation: The model is evaluated once on the 26 test samples it has neve
 
 The trained model and fitted PCA are saved as pickle files for use by the prediction script.
 
----
 
 ## Script 4 — predict_patient.py
 
@@ -129,7 +122,6 @@ After loading, the script applies the exact same preprocessing steps that were u
 
 The processed data then passes through the saved PCA transformer and into the Random Forest. Results are printed showing the predicted tumor type, confidence percentage, clinical description, and a breakdown of probabilities for all five classes. In demo mode the true label is also shown. At the end you can choose to save results as a CSV file.
 
----
 
 ## Results
 
@@ -137,7 +129,6 @@ The model achieved a test accuracy of 88.46 percent, meaning 23 out of 26 held-o
 
 Glioblastoma was classified perfectly with 7 out of 7 correct. Normal tissue was also classified perfectly with 3 out of 3 correct. Ependymoma had 8 out of 9 correct with one misclassified as pilocytic astrocytoma. Pilocytic astrocytoma had 3 out of 3 correct. Medulloblastoma was the hardest class with only 2 out of 4 correct. The other 2 were misclassified as ependymoma because these tumor types have overlapping gene expression profiles.
 
----
 
 ## Folder Structure
 
@@ -172,7 +163,6 @@ Glioblastoma was classified perfectly with 7 out of 7 correct. Normal tissue was
     |-- requirements.txt
     |-- README.md
 
----
 
 ## Why These Decisions Were Made
 
@@ -193,33 +183,3 @@ The dataset has only 130 samples which limits how well the model generalizes to 
 
 Testing the model on a second brain tumor dataset from NCBI GEO such as GSE4290 would show whether it truly generalizes. Comparing with SVM or XGBoost would show whether Random Forest is the best choice for this data. Adding biomarker discovery using ANOVA could identify which specific genes most strongly distinguish each tumor type, which is useful for clinical research. A simple web interface using Streamlit would let users upload files and get predictions without using the command line.
 
-
-## Refrences
-1. Golub et al. (1999). Molecular Classification of Cancer. Science 286(5439).
-   https://pubmed.ncbi.nlm.nih.gov/10521349/
-
-2. Pomeroy et al. (2002). Prediction of CNS tumour outcome based on gene expression. Nature 415.
-   https://pubmed.ncbi.nlm.nih.gov/11807556/
-
-3. Breiman (2001). Random Forests. Machine Learning 45(1).
-   https://link.springer.com/article/10.1023/A:1010933404324
-
-4. Jolliffe (2002). Principal Component Analysis. Springer-Verlag.
-   https://link.springer.com/book/10.1007/b98835
-
-5. Edgar et al. (2002). Gene Expression Omnibus. Nucleic Acids Research 30(1).
-   https://pubmed.ncbi.nlm.nih.gov/11752295/
-
-6. Pedregosa et al. (2011). Scikit-learn: Machine Learning in Python. JMLR 12.
-   https://jmlr.org/papers/v12/pedregosa11a.html
-
----
-
-## Author
-
-Abdul Malik
-B.Tech Computer Science and Engineering (AI), 3rd Year, 6th Semester
-Enrollment: 2023-350-002
-Jamia Hamdard, New Delhi
-Supervisor: Dr. Farheen Siddiqui
-Course: BTCSE 601, Minor Project-I

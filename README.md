@@ -76,7 +76,6 @@ This script loads the raw dataset and prints the following information without m
 
 It also saves a bar chart of the class distribution to the outputs folder.
 
----
 
 ## Script 2 — preprocess.py
 

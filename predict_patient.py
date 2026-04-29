@@ -1,13 +1,5 @@
 # predict_patient.py
-#
-# Use this script to predict brain tumor type for REAL patient data
-# WITHOUT needing Streamlit or any web browser.
-#
-# How to run:
-#   python predict_patient.py
-#
-# The script will ask you for the path to your patient CSV file
-# and print the prediction results directly in the terminal.
+
 
 import pandas as pd
 import numpy as np
@@ -18,8 +10,6 @@ import random
 
 
 # COLORS FOR TERMINAL OUTPUT
-# These are ANSI escape codes that color terminal text
-# Makes output easier to read
 class Color:
     GREEN  = '\033[92m'
     RED    = '\033[91m'
@@ -32,25 +22,21 @@ class Color:
 
 def print_header():
     print()
-    print(Color.PURPLE + Color.BOLD + "=" * 60)
-    print("   BRAIN TUMOR CLASSIFICATION SYSTEM")
-    print("   Gene Expression Based Prediction")
-    print("=" * 60 + Color.RESET)
+    print(Color.PURPLE + Color.BOLD + "=" * 40)
+    print(" BRAIN TUMOR CLASSIFICATION SYSTEM")
+    print(" Gene Expression Based Prediction")
+    print("=" * 40 + Color.RESET)
     print()
 
 
 def print_section(title):
     print()
-    print(Color.BLUE + Color.BOLD + f"▶ {title}" + Color.RESET)
+    print(Color.BLUE + Color.BOLD + f"{title}" + Color.RESET)
     print("-" * 50)
 
 
-# ---------------------------------------------------------------
-# STEP 1: Load saved models
-#
-# All models were saved during training stage.
-# We load them here to use for prediction.
-# ---------------------------------------------------------------
+# Load saved models
+
 def load_models():
     print_section("Loading Models")
 
@@ -65,13 +51,15 @@ def load_models():
     # Check all files exist before loading
     missing = [f for f in required_files if not os.path.exists(f)]
     if missing:
-        print(Color.RED + "❌ Missing model files:" + Color.RESET)
+        print(Color.RED + "Missing model files:" + Color.RESET)
         for f in missing:
             print(f"   - {f}")
+
+            
         print()
         print("Please run these scripts first:")
-        print("   python 2_preprocess.py")
-        print("   python 3_train_model.py")
+        print(" python preprocess.py")
+        print(" python train_model.py")
         sys.exit(1)   # exit the program with error code 1
 
     model         = pickle.load(open("model/model.pkl",         "rb"))
@@ -80,8 +68,8 @@ def load_models():
     encoder       = pickle.load(open("model/encoder.pkl",       "rb"))
     feature_names = pickle.load(open("model/feature_names.pkl", "rb"))
 
-    print(Color.GREEN + "✅ All models loaded successfully" + Color.RESET)
-    print(f"   Model type    : Random Forest ({model.n_estimators} trees)")
+    print(Color.GREEN + " All models loaded successfully" + Color.RESET)
+    print(f"   Model type  : Random Forest ({model.n_estimators} trees)")
     print(f"   PCA components: {pca.n_components_}")
     print(f"   Gene features : {len(feature_names)}")
     print(f"   Tumor classes : {list(encoder.classes_)}")
@@ -89,13 +77,8 @@ def load_models():
     return model, pca, scaler, encoder, feature_names
 
 
-# ---------------------------------------------------------------
-# STEP 2: Load patient data
-#
-# Supports two input modes:
-#   Mode A → Student provides a file path
-#   Mode B → Use demo data from the original dataset
-# ---------------------------------------------------------------
+# Load patient data
+
 def load_patient_data(feature_names):
     print_section("Load Patient Data")
 
@@ -111,7 +94,7 @@ def load_patient_data(feature_names):
         # Use demo data
         demo_path = "data/Brain_GSE50161.csv"
         if not os.path.exists(demo_path):
-            print(Color.RED + f"❌ Demo file not found at: {demo_path}" + Color.RESET)
+            print(Color.RED + f"Demo file not found at: {demo_path}" + Color.RESET)
             sys.exit(1)
 
         df_full = pd.read_csv(demo_path)
@@ -121,23 +104,16 @@ def load_patient_data(feature_names):
         n = input("How many demo samples to predict? (1-10, default 5): ").strip()
         n = int(n) if n.isdigit() and 1 <= int(n) <= 10 else 5
 
-        # -------------------------------------------------------
-        # FIXED: Use STRATIFIED random sampling
-        # Old code used df.iloc[:n] which always picked the first
-        # n rows — all ependymoma since dataset is sorted by class.
-        #
-        # New approach: pick at least 1 sample from EACH class,
-        # then fill remaining slots randomly from the whole dataset.
-        #
-        # This guarantees you see different tumor types every time.
-        # -------------------------------------------------------
+        #  Use STRATIFIED random sampling
+        
         all_classes = df_full['type'].unique()
         n_classes   = len(all_classes)
 
         if n >= n_classes:
             # Pick 1 from each class first (guaranteed variety)
             one_per_class = (
-                df_full.groupby('type')
+                df_full.groupby('type', group_keys=False).sample(n=1)
+                # df_full.groupby('type')
                 .apply(lambda x: x.sample(1, random_state=np.random.randint(0, 9999)))
                 .reset_index(drop=True)
             )
@@ -165,13 +141,13 @@ def load_patient_data(feature_names):
         print()
         print("  Randomly selected samples:")
         for i, label in enumerate(true_labels):
-            print(f"    Sample {i+1} → true class: {Color.YELLOW}{label}{Color.RESET}")
+            print(f"    Sample {i+1} - true class: {Color.YELLOW}{label}{Color.RESET}")
 
         # Remove metadata columns for prediction
         df = sampled_df.drop(columns=['samples', 'type'], errors='ignore')
 
         print()
-        print(Color.GREEN + f"✅ Demo data loaded: {n} samples (stratified random)" + Color.RESET)
+        print(Color.GREEN + f" Demo data loaded: {n} samples (stratified random)" + Color.RESET)
         return df, true_labels
 
     else:
@@ -187,12 +163,12 @@ def load_patient_data(feature_names):
         file_path = file_path.strip('"').strip("'")
 
         if not os.path.exists(file_path):
-            print(Color.RED + f"❌ File not found: {file_path}" + Color.RESET)
+            print(Color.RED + f" File not found: {file_path}" + Color.RESET)
             print("Please check the path and try again.")
             sys.exit(1)
 
         df = pd.read_csv(file_path)
-        print(Color.GREEN + f"✅ File loaded: {df.shape[0]} samples, {df.shape[1]} columns" + Color.RESET)
+        print(Color.GREEN + f" File loaded: {df.shape[0]} samples, {df.shape[1]} columns" + Color.RESET)
 
         # Show first few rows
         print()
@@ -206,18 +182,8 @@ def load_patient_data(feature_names):
         return df, true_labels
 
 
-# ---------------------------------------------------------------
-# STEP 3: Preprocess the patient data
-#
-# We apply the EXACT same steps as during training:
-#   1. Remove AFFX control probes
-#   2. Align columns to match training features
-#   3. Fill any missing genes with 0
-#   4. Apply saved scaler (StandardScaler)
-#
-# This is critical — if preprocessing differs from training,
-# predictions will be wrong.
-# ---------------------------------------------------------------
+#Preprocess the patient data
+
 def preprocess(df, scaler, feature_names):
     print_section("Preprocessing Patient Data")
 
@@ -233,7 +199,7 @@ def preprocess(df, scaler, feature_names):
     # Fill any NaN values with 0
     nan_count = df.isnull().sum().sum()
     if nan_count > 0:
-        print(Color.YELLOW + f"   ⚠ {nan_count} missing values found — filled with 0" + Color.RESET)
+        print(Color.YELLOW + f"{nan_count} missing values found — filled with 0" + Color.RESET)
         df = df.fillna(0)
 
     # Check how many training genes are present in patient data
@@ -242,17 +208,17 @@ def preprocess(df, scaler, feature_names):
     overlap       = patient_cols & training_cols
     missing_genes = training_cols - patient_cols
 
-    print(f"   Matching genes      : {len(overlap)} / {len(feature_names)}")
+    print(f" Matching genes : {len(overlap)} / {len(feature_names)}")
 
     if len(missing_genes) > 0:
-        print(Color.YELLOW + f"   ⚠ {len(missing_genes)} genes missing — filled with 0" + Color.RESET)
+        print(Color.YELLOW + f" {len(missing_genes)} genes missing — filled with 0" + Color.RESET)
         for gene in missing_genes:
             df[gene] = 0
 
     if len(overlap) < len(feature_names) * 0.5:
         # Less than 50% match is a serious problem
-        print(Color.RED + "❌ Less than 50% gene overlap — data may be from wrong platform" + Color.RESET)
-        print("   Expected: Affymetrix HG-U133 Plus 2.0 format")
+        print(Color.RED + " Less than 50% gene overlap — data may be from wrong platform" + Color.RESET)
+        print("  Expected: Affymetrix HG-U133 Plus 2.0 format")
         sys.exit(1)
 
     # Reorder columns to exactly match training order
@@ -260,25 +226,19 @@ def preprocess(df, scaler, feature_names):
 
     # Apply saved scaler — SAME scaling as used during training
     X_scaled = scaler.transform(df)
-    print(f"   Scaling applied     : StandardScaler (mean=0, std=1)")
-    print(Color.GREEN + "✅ Preprocessing complete" + Color.RESET)
+    print(f" Scaling applied  : StandardScaler (mean=0, std=1)")
+    print(Color.GREEN + "Preprocessing complete" + Color.RESET)
 
     return X_scaled
 
 
-# ---------------------------------------------------------------
-# STEP 4: Make predictions
-#
-# Pipeline:
-#   Scaled data → PCA transform → Random Forest predict
-#   We also get probability scores (confidence per class)
-# ---------------------------------------------------------------
+#Make predictions
 def predict(X_scaled, model, pca, encoder):
     print_section("Running Prediction")
 
     # Apply PCA — reduce dimensions same as training
     X_pca = pca.transform(X_scaled)
-    print(f"   PCA applied: {X_scaled.shape[1]} genes → {X_pca.shape[1]} components")
+    print(f" PCA applied: {X_scaled.shape[1]} genes - {X_pca.shape[1]} components")
 
     # Get predicted class numbers
     predictions = model.predict(X_pca)
@@ -291,19 +251,17 @@ def predict(X_scaled, model, pca, encoder):
     # Convert numbers back to tumor type names
     tumor_names = encoder.inverse_transform(predictions)
 
-    print(Color.GREEN + f"✅ Predictions complete for {len(tumor_names)} sample(s)" + Color.RESET)
+    print(Color.GREEN + f" Predictions complete for {len(tumor_names)} sample(s)" + Color.RESET)
 
     return tumor_names, probabilities, encoder.classes_
 
 
-# ---------------------------------------------------------------
-# STEP 5: Display results in a clean, readable format
-# ---------------------------------------------------------------
+# Display results in a clean, readable format
 def display_results(tumor_names, probabilities, class_names, true_labels=None):
     print()
-    print(Color.PURPLE + Color.BOLD + "=" * 60)
+    print(Color.PURPLE + Color.BOLD + "=" * 40)
     print("   PREDICTION RESULTS")
-    print("=" * 60 + Color.RESET)
+    print("=" * 40 + Color.RESET)
 
     # Clinical descriptions for each tumor type
     descriptions = {
@@ -330,7 +288,7 @@ def display_results(tumor_names, probabilities, class_names, true_labels=None):
         print(f"  {'─' * 45}")
 
         # Main prediction
-        print(f"  🧬 Predicted Type  : " +
+        print(f"  Predicted Type  : " +
               Color.BOLD + Color.GREEN + f"{tumor.upper()}" + Color.RESET)
 
         # True label comparison (only available for demo data)
@@ -342,12 +300,12 @@ def display_results(tumor_names, probabilities, class_names, true_labels=None):
                   label_color + f"{true_labels[i]}" + Color.RESET)
 
         # Confidence
-        print(f"  📊 Confidence      : " +
+        print(f" Confidence      : " +
               conf_color + f"{confidence:.1f}%" + Color.RESET)
 
         # Clinical description
         desc = descriptions.get(tumor, "Brain tumor")
-        print(f"  📋 Description     : {desc}")
+        print(f" Description     : {desc}")
 
         # Probability breakdown for all classes
         print(f"\n  Probability breakdown:")
@@ -364,59 +322,52 @@ def display_results(tumor_names, probabilities, class_names, true_labels=None):
     print(Color.PURPLE + "=" * 60 + Color.RESET)
 
 
-# ---------------------------------------------------------------
-# STEP 6: Save results to CSV
-# ---------------------------------------------------------------
-def save_results(tumor_names, probabilities, class_names, true_labels=None):
-    print_section("Save Results")
+# Save results to CSV
+# def save_results(tumor_names, probabilities, class_names, true_labels=None):
+#     print_section("Save Results")
 
-    save = input("Save results to CSV file? (y/n): ").strip().lower()
+#     save = input("Save results to CSV file? (y/n): ").strip().lower()
 
-    if save == 'y':
-        # Build results dataframe
-        results = []
-        for i, (tumor, probs) in enumerate(zip(tumor_names, probabilities)):
-            row = {
-                'sample_number': i + 1,
-                'predicted_type': tumor,
-                'confidence_pct': round(probs.max() * 100, 2)
-            }
-            # Add true label if available
-            if true_labels:
-                row['true_label'] = true_labels[i]
-                row['correct']    = (true_labels[i] == tumor)
+#     if save == 'y':
+#         # Build results dataframe
+#         results = []
+#         for i, (tumor, probs) in enumerate(zip(tumor_names, probabilities)):
+#             row = {
+#                 'sample_number': i + 1,
+#                 'predicted_type': tumor,
+#                 'confidence_pct': round(probs.max() * 100, 2)
+#             }
+#             # Add true label if available
+#             if true_labels:
+#                 row['true_label'] = true_labels[i]
+#                 row['correct']    = (true_labels[i] == tumor)
 
-            # Add probability for each class
-            for cls, prob in zip(class_names, probs):
-                row[f'prob_{cls}'] = round(prob, 4)
+#             # Add probability for each class
+#             for cls, prob in zip(class_names, probs):
+#                 row[f'prob_{cls}'] = round(prob, 4)
 
-            results.append(row)
+#             results.append(row)
 
-        results_df = pd.DataFrame(results)
+#         results_df = pd.DataFrame(results)
 
-        # Default save location
-        save_path = "outputs/patient_predictions.csv"
-        os.makedirs("outputs", exist_ok=True)
+#         # Default save location
+#         save_path = "outputs/patient_predictions.csv"
+#         os.makedirs("outputs", exist_ok=True)
 
-        custom = input(f"Save path (press Enter for default: {save_path}): ").strip()
-        if custom:
-            save_path = custom.strip('"').strip("'")
+#         custom = input(f"Save path (press Enter for default: {save_path}): ").strip()
+#         if custom:
+#             save_path = custom.strip('"').strip("'")
 
-        results_df.to_csv(save_path, index=False)
-        print(Color.GREEN + f"✅ Results saved to: {save_path}" + Color.RESET)
-        print()
-        print(results_df.to_string(index=False))
-    else:
-        print("Results not saved.")
+#         results_df.to_csv(save_path, index=False)
+#         print(Color.GREEN + f" Results saved to: {save_path}" + Color.RESET)
+#         print()
+#         print(results_df.to_string(index=False))
+#     else:
+#         print("Results not saved.")
 
 
-# ---------------------------------------------------------------
-# MAIN — runs when you execute: python predict_patient.py
-#
-# if __name__ == "__main__" means:
-# "Only run this block if this file is run directly"
-# (not when imported by another script)
-# ---------------------------------------------------------------
+# MAIN runs when you execute  predict_patient.py
+
 if __name__ == "__main__":
 
     print_header()
@@ -428,6 +379,6 @@ if __name__ == "__main__":
     tumor_names, probabilities, class_names    = predict(X_scaled, model, pca, encoder)
 
     display_results(tumor_names, probabilities, class_names, true_labels)
-    save_results(tumor_names, probabilities, class_names, true_labels)
+    # save_results(tumor_names, probabilities, class_names, true_labels)
 
-    print(Color.BOLD + "\n👉 Prediction session complete.\n" + Color.RESET)
+    print(Color.BOLD + "\Prediction session complete.\n" + Color.RESET)

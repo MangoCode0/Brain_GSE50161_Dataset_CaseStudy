@@ -1,18 +1,4 @@
-# PCA ,ModelTraining,Evaluation
-#
-# Goal: Reduce 54,613 gene features → 50 components using PCA,
-#       train a Random Forest classifier, evaluate properly,
-#       and save everything for the app and biomarker stage.
-#
-# Flow:
-#   Load preprocessed data
-#   → Find best PCA components
-#   → Apply PCA
-#   → Train Random Forest
-#   → Cross Validation
-#   → Evaluate on test set
-#   → Plot confusion matrix
-#   → Save model + PCA
+# PCA,ModelTraining,Evaluation
 import matplotlib
 matplotlib.use('Agg') 
 import numpy as np
@@ -36,10 +22,8 @@ os.makedirs("outputs", exist_ok=True)
 os.makedirs("model",   exist_ok=True)
 
 
-# STEP 1: Load preprocessed data
-#
-# np.load() loads the .npy files we saved in preprocess stage
-# allow_pickle=False is safe default for plain arrays
+# Load preprocessed data
+
 print("Loading Preprocessed Data")
 
 X_train = np.load("data/processed/X_train.npy")
@@ -55,22 +39,8 @@ print(f"X_test  shape : {X_test.shape}")   # (26,  54613)
 print(f"Classes       : {list(encoder.classes_)}")
 
 
-# Find the right number of PCA components
-#
-# We don't just guess 20 or 50 — we check how much variance
-# each component explains.
-#
-# Think of it like this:
-#   Component 1 explains 35% of all variation in the data
-#   Component 2 explains 12%
-#   Component 3 explains 8%
-#   ... and so on
-#
-# We want to keep enough components to explain at least 90% total.
-# That's the "elbow" — after that, adding more components gives
-# diminishing returns.
-#
-# We fit PCA on train data only (never touch test data here)
+
+# We fit PCA on train data only 
 print("Finding Optimal PCA Components")
 
 # First fit PCA with all possible components to see variance curve
@@ -78,20 +48,18 @@ pca_full = PCA(random_state=42)
 pca_full.fit(X_train)  # fit on train only — learns the structure
 
 # Cumulative explained variance
-# cumsum() adds up values one by one:
-# [0.35, 0.12, 0.08, ...] → [0.35, 0.47, 0.55, ...]
+# cumsum adds up values one by one
 cumulative_variance = np.cumsum(pca_full.explained_variance_ratio_)
 
 # Find how many components reach 90% variance
-# np.argmax finds the FIRST position where condition is True
 n_components_90 = np.argmax(cumulative_variance >= 0.90) + 1  # +1 because index starts at 0
 n_components_95 = np.argmax(cumulative_variance >= 0.95) + 1
 
 print(f"Components needed for 90% variance: {n_components_90}")
 print(f"Components needed for 95% variance: {n_components_95}")
 
-# We'll use 50 components — good balance of speed and information
-# (covers majority of variance, keeps model fast)
+# We'll use 50 components 
+# covers majority of variance, keeps model fast
 N_COMPONENTS = 50
 print(f"\nChosen: {N_COMPONENTS} components")
 print(f"Variance explained by {N_COMPONENTS} components: {cumulative_variance[N_COMPONENTS-1]*100:.2f}%")
@@ -121,12 +89,7 @@ print("Chart saved: outputs/pca_variance_curve.png")
 
 #Apply PCA
 # Now we actually reduce dimensions:
-#   X_train: 104 samples × 54,613 genes → 104 samples × 50 components
-#   X_test :  26 samples × 54,613 genes →  26 samples × 50 components
-#
-# IMPORTANT:
-#   fit_transform on train → PCA learns the components from train data
-#   transform on test      → applies same transformation (no new learning)
+
 print("\nApplying PCA")
 
 pca = PCA(n_components=N_COMPONENTS, random_state=42)
@@ -169,25 +132,15 @@ print("Chart saved: outputs/pca_2d_scatter.png")
 
 
 # Train the Random Forest
-#
-# Parameters explained:
-#   n_estimators=200  → 200 decision trees vote together
-#                        more trees = more stable (but slower)
-#   max_depth=10      → each tree can ask max 10 questions
-#                        prevents overfitting (memorizing train data)
-#   class_weight='balanced' → automatically handles class imbalance
-#                        gives more importance to rare classes (Normal=13)
-#   random_state=42   → reproducible results
-#   n_jobs=-1         → use all CPU cores for speed
-# ---------------------------------------------------------------
+
 print("Random forest Training with 200 trees")
 
 model = RandomForestClassifier(
     n_estimators=200,       # number of trees
-    max_depth=10,           # max depth per tree
-    class_weight='balanced',# handles our imbalanced classes
+    max_depth=10,            # max depth per tree
+    class_weight='balanced',   # handles our imbalanced classes
     random_state=42,        # reproducibility
-    n_jobs=-1               # use all CPU cores
+    n_jobs=-1                   # use all CPU cores
 )
 
 model.fit(X_train_pca, y_train)
@@ -195,15 +148,7 @@ print("Training complete!")
 
 
 # Cross Validation
-#
-# Instead of trusting ONE train/test split, we test the model
-# 5 different ways and average the results.
-#
-# StratifiedKFold = each fold has proportional class distribution
-# cv=5 = 5 folds
-# scoring='f1_macro' = macro F1 (treats all classes equally)
-#
-# This gives a much more honest picture of model performance
+
 print("\nStratified 5-Fold Cross Validation")
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -225,11 +170,6 @@ print("Low std = model is consistent across different data splits")
 
 
 #Final Evaluation on Test Set
-#
-# Now we use the model on X_test_pca — data it has NEVER seen.
-# This is the honest final score.
-#
-# classification_report gives precision, recall, F1 per class
 # confusion_matrix shows which classes were confused with which
 print("\nFinal Evaluation on Test Set")
 
@@ -256,15 +196,7 @@ print("  support   : how many samples of this class in test set")
 
 
 # Confusion Matrix
-# A confusion matrix shows:
-#   Rows    = actual class
-#   Columns = predicted class
-#   Diagonal = correct predictions (we want these to be HIGH)
-#   Off-diagonal = mistakes (we want these to be LOW)
-#
-# Example reading:
-#   Row "glioblastoma", Col "ependymoma" = 2
-#   means: 2 glioblastoma samples were wrongly predicted as ependymoma
+
 print("\nConfusion Matrix")
 
 cm = confusion_matrix(y_test, y_pred)
@@ -290,13 +222,7 @@ print("Chart saved: outputs/confusion_matrix.png")
 
 
 #Save the trained model and PCA
-# We save:
-#   model.pkl → the trained Random Forest
-#   pca.pkl   → the fitted PCA transformer
-#
-# These are needed in:
-#   - app.py for predictions on new data
-#   - biomarker script for feature importance analysis
+
 print("Saving Model and PCA")
 
 pickle.dump(model, open("model/model.pkl", "wb"))

@@ -1,34 +1,24 @@
 # Preprocessing
-# Goal: Prepare the raw data so our ML model can learn from it
-# Steps we do here:
-#   1. Load data
-#   2. Separate features (X) and target label (y)
-#   3. Encode text labels → numbers
-#   4. Remove control probes (AFFX)
-#   5. Scale gene expression values
-#   6. Split into train and test sets
-#   7. Save everything for next stage
-
 import pandas as pd
 import numpy as np
 import pickle
 import os
 
-# LabelEncoder- converts text class names to numbers
-# StandardScaler- scales all gene values to same range
-# train_test_split- splits data into train and test
+# LabelEncoder converts text class names to numbers
+# StandardScaler scales all gene values to same range
+# train_test_split splits data into train and test
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 
 #Load the dataset
-# Same as before — load CSV into a DataFrame
 
 df = pd.read_csv("data/Brain_GSE50161.csv")
+print("\n")
 print(f"Dataset loaded: {df.shape[0]} samples, {df.shape[1]} columns")
-
+print("\n")
 
 # Separate features (X) and target (y)
-print("Separating Features (X) and Target (y)")
+print("Separating Features (X) and Target (y):")
 
 # y = target column
 # We extract it BEFORE modifying df
@@ -42,17 +32,12 @@ print(f"y shape (labels)  : {y_raw.shape}")
 print(f"Unique classes    : {y_raw.unique()}")
 
 # Remove AFFX control probes
-# Columns starting with "AFFX-" are technical control probes
-# used by the Affymetrix chip for quality checking.
-# They are NOT real genes — including them adds noise.
-# We filter them out by keeping only columns that do NOT start with AFFX
-print("Removing AFFX Control Probes")
+print("\n")
+print("Removing AFFX Control Probes:")
 
 before = X.shape[1]
 
 # Keep only columns that do NOT start with "AFFX"
-# ~ means NOT in pandas
-# str.startswith("AFFX") returns True for control probe columns
 X = X.loc[:, ~X.columns.str.startswith("AFFX")]
 
 after = X.shape[1]
@@ -62,11 +47,6 @@ print(f"Columns after removal  : {after}")
 print("These were quality control probes, not real genes")
 
 #Encode text labels into numbers
-# ML models only work with numbers, not text.
-# LabelEncoder assigns a number to each unique class alphabetically
-
-# fit_transform() = learn the mapping AND apply it in one step
-# We also SAVE the encoder so later we can reverse:
 print("Encoding Labels :")
 
 encoder = LabelEncoder()
@@ -81,16 +61,7 @@ print(f"y (after) : {y[:5]}")
 
 
 # Train/Test Split
-#
-# We split BEFORE scaling. Why?
-# Because the scaler must learn (fit) only from training data.
-# If we scale the full dataset first, the test data's information
-# "leaks" into the scaler — that's called data leakage.
-# The model would be tested on data it indirectly "saw" during scaling.
-#
-# stratify=y ensures each tumor type is proportionally represented
-# in both train and test sets.
-# random_state=42 makes the split reproducible (same result every run)
+
 print("STEP 5: Train/Test Split (80% train, 20% test)")
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -116,21 +87,7 @@ for i, name in enumerate(encoder.classes_):
 
 #Feature Scaling
 
-# StandardScaler transforms each gene column so that:
-#   mean = 0
-#   standard deviation = 1
-#
-# Formula: scaled_value = (original_value - mean) / std
-#
-# CRITICAL RULE:
-#   scaler.fit_transform(X_train) → learns mean/std FROM train, applies it
-#   scaler.transform(X_test)      → applies SAME mean/std to test (no learning)
-#
-# We never fit on test data — that would be cheating.
-
-print("\n" + "=" * 55)
-print("STEP 6: Scaling Gene Expression Values")
-print("=" * 55)
+print(" Scaling Gene Expression Values")
 
 scaler = StandardScaler()
 
@@ -142,20 +99,10 @@ X_test_scaled  = scaler.transform(X_test)
 
 print(f"Before scaling — Train mean: {X_train.values.mean():.4f}, std: {X_train.values.std():.4f}")
 print(f"After  scaling — Train mean: {X_train_scaled.mean():.4f}, std: {X_train_scaled.std():.4f}")
-print("After scaling: mean≈0, std≈1 for all genes — fair comparison")
+print("After scaling: mean=0, std=1 for all genes — fair comparison")
 
 
-#  Save everything
-#
-# We save:
-#   X_train_scaled, X_test_scaled  → preprocessed feature matrices
-#   y_train, y_test                → encoded labels
-#   encoder                        → to convert numbers back to names
-#   scaler                         → to scale new data in the app
-#   feature_names                  → gene names (needed for biomarker stage)
-#
-# pickle.dump() serializes Python objects to binary files
-# This lets us load them in the next scripts without reprocessing
+
 print(" Saving Preprocessed Data:")
 
 os.makedirs("model", exist_ok=True)

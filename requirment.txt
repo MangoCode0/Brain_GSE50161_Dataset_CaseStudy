@@ -1,4 +1,4 @@
 numpy 
 pandas
 scikit learn
-algo: pca, decision tree, random forest
+algo: pca, random forest

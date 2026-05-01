@@ -7,32 +7,37 @@ import seaborn as sns
 df = pd.read_csv("data/Brain_GSE50161.csv")
 
 #Basic shape
-print("DATASET SHAPE")
+print("DATASET SHAPE:")
 print(f"Total Samples (rows):{df.shape[0]}")
 print(f"Total Columns       :{df.shape[1]}")
 print(f"Gene columns only   : {df.shape[1] - 2}")  # subtract 'samples' and 'type'
 
 # Look at the first few rows
-print("FIRST 3 ROWS (first 6 columns only)")
+print("\nFIRST 3 ROWS & FIRST 6 COLUMNS ONLY:")
+
 print(df.iloc[:3, :6])  # iloc = select by position: rows 0-2, cols 0-5
 
 # Check class distribution
-print("CLASS DISTRIBUTION (Tumor Types)")
+print("\nCLASS DISTRIBUTION (Tumor Types):")
+
 class_counts = df['type'].value_counts()
 print(class_counts)
 imbalance_ratio = class_counts.max() / class_counts.min()
-print(f"\nImbalance Ratio (max/min): {imbalance_ratio:.2f}x")
+print(f"\nIMBALANCE RATIO (max/min): {imbalance_ratio:.2f}x")
+
 print("Note: Ratio > 3 means imbalanced — we must handle this carefully")
 
 # Check for missing values
-print("MISSING VALUES CHECK")
+print("\nMISSING VALUES CHECK:")
+
 total_missing = df.isnull().sum().sum()
 print(f"Total missing values: {total_missing}")
 if total_missing == 0:
     print("Great! No missing values — dataset is clean.")
 
 # Gene expression value range
-print("GENE EXPRESSION STATISTICS")
+print("\nGENE EXPRESSION STATISTICS:")
+
 gene_cols = df.drop(columns=['samples', 'type'])
 print(f"Min expression value  : {gene_cols.values.min():.3f}")
 print(f"Max expression value  : {gene_cols.values.max():.3f}")

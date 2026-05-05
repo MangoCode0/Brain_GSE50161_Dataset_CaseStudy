@@ -13,12 +13,13 @@ from sklearn.model_selection import train_test_split
 #Load the dataset
 
 df = pd.read_csv("data/Brain_GSE50161.csv")
-print("\n")
+print("-"*50)
 print(f"Dataset loaded: {df.shape[0]} samples, {df.shape[1]} columns")
-print("\n")
+print("-"*50+"\n")
 
 # Separate features (X) and target (y)
 print("Separating Features (X) and Target (y):")
+print("-"*40)
 
 # y = target column
 # We extract it BEFORE modifying df
@@ -32,14 +33,11 @@ print(f"y shape (labels)  : {y_raw.shape}")
 print(f"Unique classes    : {y_raw.unique()}")
 
 # Remove AFFX control probes
-print("\n")
-print("Removing AFFX Control Probes:")
-
+print("\nRemoving AFFX Control Probes:")
+print("-"*40)
 before = X.shape[1]
-
 # Keep only columns that do NOT start with "AFFX"
 X = X.loc[:, ~X.columns.str.startswith("AFFX")]
-
 after = X.shape[1]
 print(f"Columns before removal : {before}")
 print(f"AFFX probes removed    : {before - after}")
@@ -47,23 +45,21 @@ print(f"Columns after removal  : {after}")
 print("These were quality control probes, not real genes")
 
 #Encode text labels into numbers
-print("Encoding Labels :")
-
+print("\nEncoding Labels :")
 encoder = LabelEncoder()
 y = encoder.fit_transform(y_raw)   # y is now an array of numbers
-
 print("Encoding mapping:")
+print("-"*40)
+
 for number, name in enumerate(encoder.classes_):
-    print(f"  {name:25s} → {number}")
+    print(f"  {name:25s} - {number}")
 
 print(f"\ny (before): {y_raw.values[:5]}")
 print(f"y (after) : {y[:5]}")
 
-
 # Train/Test Split
-
-print("STEP 5: Train/Test Split (80% train, 20% test)")
-
+print("\nTrain/Test Split (80% train, 20% test):")
+print("-"*40)
 X_train, X_test, y_train, y_test = train_test_split(
     X,              # features
     y,              # labels (encoded)
@@ -71,24 +67,24 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,# makes the split same every time you run
     stratify=y      # ensures balanced class distribution in both sets
 )
-
 print(f"Training samples : {X_train.shape[0]}")
 print(f"Testing samples  : {X_test.shape[0]}")
 print(f"Features (genes) : {X_train.shape[1]}")
 
 # Verify stratification worked
 print("\nClass distribution check:")
+print("-"*40)
 train_dist = pd.Series(y_train).value_counts().sort_index()
 test_dist  = pd.Series(y_test).value_counts().sort_index()
 
 for i, name in enumerate(encoder.classes_):
-    print(f"  {name:25s} → train: {train_dist.get(i,0):3d} | test: {test_dist.get(i,0):3d}")
+    print(f"  {name:25s} - train: {train_dist.get(i,0):3d} | test: {test_dist.get(i,0):3d}")
 
 
 #Feature Scaling
 
-print(" Scaling Gene Expression Values")
-
+print("\nScaling Gene Expression Values:")
+print("-"*40)
 scaler = StandardScaler()
 
 # fit_transform on training data: learn the scale AND apply it
@@ -103,8 +99,8 @@ print("After scaling: mean=0, std=1 for all genes — fair comparison")
 
 
 
-print(" Saving Preprocessed Data:")
-
+print("Saving Preprocessed Data:")
+print("-"*40)
 os.makedirs("model", exist_ok=True)
 os.makedirs("data/processed", exist_ok=True)
 
@@ -130,7 +126,8 @@ print("Saved: model/encoder.pkl")
 print("Saved: model/scaler.pkl")
 print("Saved: model/feature_names.pkl")
 
-print("\nPreprocessing complete")
+print("\nPreprocessing complete:")
+print("-"*40)
 print(f"   {X_train_scaled.shape[0]} training samples ready")
 print(f"   {X_test_scaled.shape[0]}  testing samples ready")
 print(f"   {X_train_scaled.shape[1]} gene features")

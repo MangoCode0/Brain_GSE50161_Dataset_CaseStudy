@@ -1,13 +1,10 @@
 # predict_patient.py
-
-
 import pandas as pd
 import numpy as np
 import pickle
 import os
 import sys
 import random
-
 
 # COLORS FOR TERMINAL OUTPUT
 class Color:
@@ -19,26 +16,19 @@ class Color:
     BOLD   = '\033[1m'
     RESET  = '\033[0m'   # resets back to normal color
 
-
 def print_header():
-    print()
     print(Color.PURPLE + Color.BOLD + "=" * 40)
     print(" BRAIN TUMOR CLASSIFICATION SYSTEM")
     print(" Gene Expression Based Prediction")
-    print("=" * 40 + Color.RESET)
-    print()
-
+    print("=" * 40)
 
 def print_section(title):
-    print()
     print(Color.BLUE + Color.BOLD + f"{title}" + Color.RESET)
     print("-" * 50)
 
-
 # Load saved models
-
 def load_models():
-    print_section("Loading Models")
+    print_section("\nLoading Models")
 
     required_files = [
         "model/model.pkl",
@@ -54,8 +44,7 @@ def load_models():
         print(Color.RED + "Missing model files:" + Color.RESET)
         for f in missing:
             print(f"   - {f}")
-
-            
+    
         print()
         print("Please run these scripts first:")
         print(" python preprocess.py")
@@ -76,9 +65,7 @@ def load_models():
 
     return model, pca, scaler, encoder, feature_names
 
-
 # Load patient data
-
 def load_patient_data(feature_names):
     print_section("Load Patient Data")
 
@@ -105,7 +92,6 @@ def load_patient_data(feature_names):
         n = int(n) if n.isdigit() and 1 <= int(n) <= 10 else 5
 
         #  Use STRATIFIED random sampling
-        
         all_classes = df_full['type'].unique()
         n_classes   = len(all_classes)
 
@@ -149,7 +135,6 @@ def load_patient_data(feature_names):
         print()
         print(Color.GREEN + f" Demo data loaded: {n} samples (stratified random)" + Color.RESET)
         return df, true_labels
-
     else:
         # Real patient data
         print()
@@ -183,7 +168,6 @@ def load_patient_data(feature_names):
 
 
 #Preprocess the patient data
-
 def preprocess(df, scaler, feature_names):
     print_section("Preprocessing Patient Data")
 
@@ -231,7 +215,6 @@ def preprocess(df, scaler, feature_names):
 
     return X_scaled
 
-
 #Make predictions
 def predict(X_scaled, model, pca, encoder):
     print_section("Running Prediction")
@@ -254,7 +237,6 @@ def predict(X_scaled, model, pca, encoder):
     print(Color.GREEN + f" Predictions complete for {len(tumor_names)} sample(s)" + Color.RESET)
 
     return tumor_names, probabilities, encoder.classes_
-
 
 # Display results in a clean, readable format
 def display_results(tumor_names, probabilities, class_names, true_labels=None):
@@ -323,55 +305,52 @@ def display_results(tumor_names, probabilities, class_names, true_labels=None):
 
 
 # Save results to CSV
-# def save_results(tumor_names, probabilities, class_names, true_labels=None):
-#     print_section("Save Results")
+def save_results(tumor_names, probabilities, class_names, true_labels=None):
+    print_section("Save Results")
 
-#     save = input("Save results to CSV file? (y/n): ").strip().lower()
+    save = input("Save results to CSV file? (y/n): ").strip().lower()
 
-#     if save == 'y':
-#         # Build results dataframe
-#         results = []
-#         for i, (tumor, probs) in enumerate(zip(tumor_names, probabilities)):
-#             row = {
-#                 'sample_number': i + 1,
-#                 'predicted_type': tumor,
-#                 'confidence_pct': round(probs.max() * 100, 2)
-#             }
-#             # Add true label if available
-#             if true_labels:
-#                 row['true_label'] = true_labels[i]
-#                 row['correct']    = (true_labels[i] == tumor)
+    if save == 'y':
+        # Build results dataframe
+        results = []
+        for i, (tumor, probs) in enumerate(zip(tumor_names, probabilities)):
+            row = {
+                'sample_number': i + 1,
+                'predicted_type': tumor,
+                'confidence_pct': round(probs.max() * 100, 2)
+            }
+            # Add true label if available
+            if true_labels:
+                row['true_label'] = true_labels[i]
+                row['correct']    = (true_labels[i] == tumor)
 
-#             # Add probability for each class
-#             for cls, prob in zip(class_names, probs):
-#                 row[f'prob_{cls}'] = round(prob, 4)
+            # Add probability for each class
+            for cls, prob in zip(class_names, probs):
+                row[f'prob_{cls}'] = round(prob, 4)
 
-#             results.append(row)
+            results.append(row)
 
-#         results_df = pd.DataFrame(results)
+        results_df = pd.DataFrame(results)
 
-#         # Default save location
-#         save_path = "outputs/patient_predictions.csv"
-#         os.makedirs("outputs", exist_ok=True)
+        # Default save location
+        save_path = "outputs/patient_predictions.csv"
+        os.makedirs("outputs", exist_ok=True)
 
-#         custom = input(f"Save path (press Enter for default: {save_path}): ").strip()
-#         if custom:
-#             save_path = custom.strip('"').strip("'")
+        custom = input(f"Save path (press Enter for default: {save_path}): ").strip()
+        if custom:
+            save_path = custom.strip('"').strip("'")
 
-#         results_df.to_csv(save_path, index=False)
-#         print(Color.GREEN + f" Results saved to: {save_path}" + Color.RESET)
-#         print()
-#         print(results_df.to_string(index=False))
-#     else:
-#         print("Results not saved.")
-
+        results_df.to_csv(save_path, index=False)
+        print(Color.GREEN + f" Results saved to: {save_path}" + Color.RESET)
+        print()
+        print(results_df.to_string(index=False))
+    else:
+        print("Results not saved.")
 
 # MAIN runs when you execute  predict_patient.py
-
 if __name__ == "__main__":
 
     print_header()
-
     # Run all steps in order
     model, pca, scaler, encoder, feature_names = load_models()
     df, true_labels                            = load_patient_data(feature_names)
@@ -381,4 +360,4 @@ if __name__ == "__main__":
     display_results(tumor_names, probabilities, class_names, true_labels)
     # save_results(tumor_names, probabilities, class_names, true_labels)
 
-    print(Color.BOLD + "\Prediction session complete.\n" + Color.RESET)
+    print(Color.BOLD + "Prediction session complete.\n" + Color.RESET)

@@ -21,28 +21,22 @@ from sklearn.metrics import (
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("model",   exist_ok=True)
 
-
 # Load preprocessed data
-
-print("Loading Preprocessed Data")
-
+print("Loading Preprocessed Data:")
+print('-'*40)
 X_train = np.load("data/processed/X_train.npy")
 X_test  = np.load("data/processed/X_test.npy")
 y_train = np.load("data/processed/y_train.npy")
 y_test  = np.load("data/processed/y_test.npy")
 
-
 encoder = pickle.load(open("model/encoder.pkl", "rb"))
-
 print(f"X_train shape : {X_train.shape}")  # (104, 54613)
 print(f"X_test  shape : {X_test.shape}")   # (26,  54613)
-print(f"Classes       : {list(encoder.classes_)}")
-
-
+print(f"Classes  : \n{list(encoder.classes_)}")
 
 # We fit PCA on train data only 
-print("Finding Optimal PCA Components")
-
+print("\nFinding Optimal PCA Components:")
+print('-'*40)
 # First fit PCA with all possible components to see variance curve
 pca_full = PCA(random_state=42)
 pca_full.fit(X_train)  # fit on train only — learns the structure
@@ -83,15 +77,13 @@ plt.legend()
 plt.grid(alpha=0.3)
 plt.tight_layout()
 plt.savefig("outputs/pca_variance_curve.png", dpi=150)
-plt.show()
+# plt.show()
 print("Chart saved: outputs/pca_variance_curve.png")
-
 
 #Apply PCA
 # Now we actually reduce dimensions:
-
-print("\nApplying PCA")
-
+print("\nApplying PCA:")
+print('-'*40)
 pca = PCA(n_components=N_COMPONENTS, random_state=42)
 
 X_train_pca = pca.fit_transform(X_train)  # learn + apply on train
@@ -127,14 +119,12 @@ plt.legend(fontsize=9)
 plt.grid(alpha=0.3)
 plt.tight_layout()
 plt.savefig("outputs/pca_2d_scatter.png", dpi=150)
-plt.show()
 print("Chart saved: outputs/pca_2d_scatter.png")
 
-
 # Train the Random Forest
-
+print('-'*40)
 print("Random forest Training with 200 trees")
-
+print('-'*40)
 model = RandomForestClassifier(
     n_estimators=200,       # number of trees
     max_depth=10,            # max depth per tree
@@ -146,11 +136,9 @@ model = RandomForestClassifier(
 model.fit(X_train_pca, y_train)
 print("Training complete!")
 
-
 # Cross Validation
-
 print("\nStratified 5-Fold Cross Validation")
-
+print('-'*40)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 # cross_val_score runs the model 5 times on different splits
@@ -163,16 +151,15 @@ cv_scores = cross_val_score(
     scoring='f1_macro'  # metric
 )
 
-print(f"F1 Score per fold : {[round(s, 4) for s in cv_scores]}")
+print(f"F1 Score per fold : \n{[round(s, 4) for s in cv_scores]}")
 print(f"Mean F1 Score     : {cv_scores.mean():.4f}")
 print(f"Std Deviation     : {cv_scores.std():.4f}")
 print("Low std = model is consistent across different data splits")
 
-
 #Final Evaluation on Test Set
 # confusion_matrix shows which classes were confused with which
 print("\nFinal Evaluation on Test Set")
-
+print('-'*40)
 y_pred = model.predict(X_test_pca)
 
 # Overall accuracy
@@ -181,6 +168,7 @@ print(f"Test Accuracy: {acc*100:.2f}%")
 
 # Detailed per-class report
 print("\nDetailed Classification Report:")
+print('-'*40)
 print(classification_report(
     y_test,
     y_pred,
@@ -189,16 +177,15 @@ print(classification_report(
 
 # Explanation of report columns:
 print("\nColumn meanings:")
+print('-'*40)
 print("  precision : when model predicts X, how often is it correct?")
 print("  recall    : of all actual X cases, how many did model find?")
 print("  f1-score  : harmonic mean of precision & recall")
 print("  support   : how many samples of this class in test set")
 
-
 # Confusion Matrix
-
-print("\nConfusion Matrix")
-
+print("\nConfusion Matrix:")
+print('-'*40)
 cm = confusion_matrix(y_test, y_pred)
 
 plt.figure(figsize=(8, 6))
@@ -217,22 +204,19 @@ plt.xticks(rotation=20, ha='right')
 plt.yticks(rotation=0)
 plt.tight_layout()
 plt.savefig("outputs/confusion_matrix.png", dpi=150)
-plt.show()
+# plt.show()
 print("Chart saved: outputs/confusion_matrix.png")
 
-
 #Save the trained model and PCA
-
-print("Saving Model and PCA")
-
+print("\nSaving Model and PCA:")
+print('-'*40)
 pickle.dump(model, open("model/model.pkl", "wb"))
 pickle.dump(pca,   open("model/pca.pkl",   "wb"))
-
 print("Saved: model/model.pkl")
 print("Saved: model/pca.pkl")
 
-print("\n")
-print("TRAINING COMPLETE ")
+print("\nTRAINING COMPLETE ")
+print('-'*40)
 print(f"  Features used       : {N_COMPONENTS} PCA components (from 54,613 genes)")
 print(f"  Training samples    : {X_train_pca.shape[0]}")
 print(f"  Test samples        : {X_test_pca.shape[0]}")

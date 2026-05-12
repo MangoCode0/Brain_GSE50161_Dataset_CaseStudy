@@ -3,7 +3,7 @@
 A machine learning project that predicts brain tumor type from gene expression microarray data.
 Built as Minor Project-I (BTCSE 601) at Jamia Hamdard, New Delhi.
 
-
+--
 ## What This Project Does
 
 This project takes gene expression data from brain tissue samples and predicts which type of brain tumor the patient has. The dataset has 130 patient samples, each with 54,613 gene expression values. Because there are far more features than samples, we first reduce dimensions using PCA, then classify using Random Forest.
@@ -15,7 +15,7 @@ The pipeline runs in four Python scripts in order:
 3. train_model.py — applies PCA, trains the model, and evaluates it
 4. predict_patient.py — takes a new patient CSV and predicts the tumor type
 
-
+--
 ## Dataset
 
 The dataset is GSE50161, available freely from NCBI Gene Expression Omnibus (GEO).
@@ -32,7 +32,7 @@ The data was measured using the Affymetrix HG-U133 Plus 2.0 microarray chip and 
 
 Dataset link: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50161
 
-
+--
 ## Requirements
 
 Python 3.8 or above is required. Install all dependencies with:
@@ -47,7 +47,7 @@ The requirements file contains:
     matplotlib
     seaborn
 
-
+--
 ## How to Run
 
 First place the dataset CSV file inside a folder called data:
@@ -63,7 +63,7 @@ Then run the four scripts in order:
 
 Each script saves its output automatically. You do not need to pass any arguments.
 
-
+--
 ## Script 1 — explore_data.py
 
 This script loads the raw dataset and prints the following information without modifying anything:
@@ -76,7 +76,7 @@ This script loads the raw dataset and prints the following information without m
 
 It also saves a bar chart of the class distribution to the outputs folder.
 
-
+--
 ## Script 2 — preprocess.py
 
 This script prepares the raw data for machine learning. The steps are performed in a strict order because the train-test split must happen before scaling to prevent data leakage.
@@ -93,7 +93,7 @@ Feature scaling: StandardScaler transforms each gene column so that across the t
 
 All processed arrays and Python objects are saved to files so the next scripts can load them directly without repeating any work.
 
-
+--
 ## Script 3 — train_model.py
 
 This script reduces dimensions, trains the model, and evaluates it.
@@ -110,7 +110,7 @@ Final evaluation: The model is evaluated once on the 26 test samples it has neve
 
 The trained model and fitted PCA are saved as pickle files for use by the prediction script.
 
-
+--
 ## Script 4 — predict_patient.py
 
 This script lets you classify new patient samples from the terminal without needing a web browser.
@@ -121,14 +121,14 @@ After loading, the script applies the exact same preprocessing steps that were u
 
 The processed data then passes through the saved PCA transformer and into the Random Forest. Results are printed showing the predicted tumor type, confidence percentage, clinical description, and a breakdown of probabilities for all five classes. In demo mode the true label is also shown. At the end you can choose to save results as a CSV file.
 
-
+--
 ## Results
 
 The model achieved a test accuracy of 88.46 percent, meaning 23 out of 26 held-out test samples were correctly classified.
 
 Glioblastoma was classified perfectly with 7 out of 7 correct. Normal tissue was also classified perfectly with 3 out of 3 correct. Ependymoma had 8 out of 9 correct with one misclassified as pilocytic astrocytoma. Pilocytic astrocytoma had 3 out of 3 correct. Medulloblastoma was the hardest class with only 2 out of 4 correct. The other 2 were misclassified as ependymoma because these tumor types have overlapping gene expression profiles.
 
-
+--
 ## Folder Structure
 
     BrainTumorProject/
@@ -162,7 +162,7 @@ Glioblastoma was classified perfectly with 7 out of 7 correct. Normal tissue was
     |-- requirements.txt
     |-- README.md
 
-
+--
 ## Why These Decisions Were Made
 
 PCA was chosen because with 54,613 gene features and only 130 samples, any model trained directly would memorize noise instead of learning real patterns. PCA compresses the data to 50 components while keeping 88 percent of the information.
@@ -173,12 +173,12 @@ The train-test split happens before scaling because if you scale the full datase
 
 Stratification during the split ensures that rare classes like normal (13 samples) appear in both training and test sets in proportion, rather than ending up entirely in one set by random chance.
 
-
+--
 ## Limitations
 
 The dataset has only 130 samples which limits how well the model generalizes to new patients from different hospitals or populations. All evaluation is done on the same dataset and the model has not been tested on independent external data. The prediction tool only works with Affymetrix HG-U133 Plus 2.0 microarray data. Medulloblastoma had low F1 because only 4 test samples were available and the class has biological overlap with ependymoma.
-
+--
 ## Possible Future Extensions
 
 Testing the model on a second brain tumor dataset from NCBI GEO such as GSE4290 would show whether it truly generalizes. Comparing with SVM or XGBoost would show whether Random Forest is the best choice for this data. Adding biomarker discovery using ANOVA could identify which specific genes most strongly distinguish each tumor type, which is useful for clinical research. A simple web interface using Streamlit would let users upload files and get predictions without using the command line.
-
+--

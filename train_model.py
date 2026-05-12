@@ -94,7 +94,6 @@ print(f"X_test : {X_test.shape}  → {X_test_pca.shape}")
 print(f"Dimensionality reduced by: {round((1 - N_COMPONENTS/X_train.shape[1])*100, 2)}%")
 
 # Visualize first 2 PCA components (PC1 vs PC2)
-# This is a 2D "map" of where each sample sits in PCA space
 # If classes cluster separately, the model will learn easily
 plt.figure(figsize=(8, 6))
 colors = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626']

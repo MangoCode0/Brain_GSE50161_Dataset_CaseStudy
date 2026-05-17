@@ -5,6 +5,19 @@ Built as Minor Project-I (BTCSE 601) at Jamia Hamdard, New Delhi.
 
 --
 ## What This Project Does
+GSE50161 Dataset
+        ↓
+Preprocessing
+(AFFX Removal + Scaling)
+        ↓
+PCA
+(54613 → 50 Features)
+        ↓
+Random Forest
+        ↓
+Evaluation
+        ↓
+Patient Prediction Tool
 
 This project takes gene expression data from brain tissue samples and predicts which type of brain tumor the patient has. The dataset has 130 patient samples, each with 54,613 gene expression values. Because there are far more features than samples, we first reduce dimensions using PCA, then classify using Random Forest.
 
